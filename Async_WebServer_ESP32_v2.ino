@@ -67,7 +67,8 @@ void setup(){
       if (request->hasParam("ssid", true)) {
           senha_rede = request->getParam("pass", true)->value();
       } else {senha_rede = "Sem dados";}
-      request->send(200, "text/plain", "POST\n Nome: " + nome_rede + "\n Senha: " + senha_rede);
+      request->send(200, "text/html", webpageFinal);//"POST\n Nome: " + nome_rede + "\n Senha: " + senha_rede);
+      
         Serial.print("Dados inseridos: ");
         Serial.print(nome_rede);
         Serial.print(" - ");
