@@ -18,15 +18,15 @@ const char *password = "";
 
 String nome_rede, senha_rede;
 bool SETUP = true,INICIO = true;
- 
+
 AsyncWebServer server(80);
 //=============================================================================//
 void notFound(AsyncWebServerRequest *request) {
     request->send(404, "text/plain", "Not found");
 }//end void notFound()
-//=============================================================================// 
+//=============================================================================//
 void setup(){
-  Serial.begin(115200); 
+  Serial.begin(115200);
   pinMode(btn_reset,INPUT_PULLUP);
   pinMode(led,OUTPUT);
   openFS();
@@ -37,12 +37,12 @@ void setup(){
       Serial.print("IP address: ");
       Serial.println(WiFi.softAPIP());
       SETUP = false;
-    }//end while SETUP 
+    }//end while SETUP
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
         request->send(200, "text/html", webpageDados);
     });
   /*
-    server.on("/dados", HTTP_GET, [] (AsyncWebServerRequest *request) {   
+    server.on("/dados", HTTP_GET, [] (AsyncWebServerRequest *request) {
       if (request->hasParam("ssid")) {
           nome_rede = request->getParam("ssid")->value();
       } else {
@@ -80,24 +80,26 @@ void setup(){
     server.begin();
     delay(100);
     estado_led = !estado_led;
-    digitalWrite(led, estado_led);     
+    digitalWrite(led, estado_led);
   }//end while SETUP
-  
+
   Serial.println("Fim setup inicio");
-  
+
   char nome[50];//converte string para char
   nome_rede.toCharArray(nome, 50);
   Serial.println(nome);
   char senha[50];//converte string para char
   senha_rede.toCharArray(senha, 50);
   Serial.println(senha);
-  
+
   WiFi.mode(WIFI_STA);
   WiFi.begin(nome, senha);
   int cont = 0;
   while (WiFi.status() != WL_CONNECTED) {
       delay(1000);
+      reset();
       cont ++;
+      Serial.print("Conectando: ");
       Serial.println(cont);
       if(cont == 15){//se passar 15 segundos sem conectar volta ao inicio
         INICIO = true;
@@ -105,9 +107,9 @@ void setup(){
         ESP.restart();
       }//end if cont
   }//end while wifi status
-  Serial.println("\nCONNECTED"); //se conectado na rede salva os dados 
+  Serial.println("\nCONNECTED"); //se conectado na rede salva os dados
   writeFile(nome_rede,file_ssid);
-  writeFile(senha_rede,file_pass); 
+  writeFile(senha_rede,file_pass);
 }//end setup()
 //=============================================================================//
 void loop(){
@@ -176,12 +178,23 @@ void reset(){
     Serial.println(cont);
     if(cont >= 5){
       deleteFile(SPIFFS, file_ssid);//deleta arquivo de rede
-      deleteFile(SPIFFS, file_pass);//deleta arquivo de rede 
+      deleteFile(SPIFFS, file_pass);//deleta arquivo de rede
       Serial.println("Reiniciando");
-      delay(500);  
+      delay(500);
       ESP.restart();
     }
     delay(1000);
-  }//end while btn_reset  
+  }//end while btn_reset
+  while(WiFi.status() != WL_CONNECTED){
+    cont++;
+    Serial.print("Reconectando: ");
+    Serial.println(cont);
+    if(cont >= 10){
+      Serial.println("Reiniciando: ");
+      delay(500);
+      ESP.restart();
+    }
+    delay(1000); 
+  }//end while wifi status  
 }//end reset()
 //=============================================================================//
