@@ -111,7 +111,9 @@ R"=====(
     <body>
     <!---------------------------JavaScript------------------------------->
       <script>
-         alert("Tentando Conectar!");
+        alert("Tentando Conectar!");
+        //location.reload();
+        location.href = "/";
       </script>
     </body>
   </html>
