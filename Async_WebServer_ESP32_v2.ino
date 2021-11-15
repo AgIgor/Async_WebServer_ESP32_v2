@@ -17,6 +17,11 @@ const char *ssid = "ESP32";
 const char *password = "";
 
 String nome_rede, senha_rede;
+
+String lista;
+
+
+
 bool SETUP = true,INICIO = true;
 
 AsyncWebServer server(80);
@@ -29,6 +34,50 @@ void setup(){
   Serial.begin(115200);
   pinMode(btn_reset,INPUT_PULLUP);
   pinMode(led,OUTPUT);
+  digitalWrite(led,HIGH);
+  delay(100);
+  digitalWrite(led,LOW);
+  delay(500);
+  digitalWrite(led,HIGH);
+  delay(100);
+  digitalWrite(led,LOW);
+  delay(1000);
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
+  delay(2000);
+  Serial.println("Scaneando Redes");
+  int n = WiFi.scanNetworks();
+
+  Serial.println("Completo");
+  if (n == 0) {
+      Serial.println("Sem redes encontradas");
+  } else {
+      String lista_redes[n];
+      Serial.print(n);
+      Serial.println(" Redes encontradas");
+      for (int i = 0; i < n; ++i) {
+        //Serial.print(i + 1);
+        //Serial.print(": ");
+        //Serial.print(WiFi.SSID(i));
+        //Serial.print(" (");
+        //Serial.print(WiFi.RSSI(i));
+        //Serial.print(")");
+        //Serial.println((WiFi.encryptionType(i) == WIFI_AUTH_OPEN)?" ":"*");
+        lista_redes[i] = WiFi.SSID(i);
+        delay(100);
+      }//end for n scan
+    delay(500);
+    for(int i = 0;i < n; i++){
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      Serial.println(lista_redes[i]);
+      lista += lista_redes[i] + "<br>";
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      delay(100);
+    } //end for n print     
+  }//end if redes = 0
+
+  Serial.println("Fim Scan\n");
+  delay(500);
   openFS();
   while(INICIO){
     if(SETUP){
@@ -37,8 +86,45 @@ void setup(){
       Serial.print("IP address: ");
       Serial.println(WiFi.softAPIP());
       SETUP = false;
+      delay(500);
     }//end while SETUP
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+        request->send(200, "text/html",
+
+         "<!DOCTYPE html>\
+          <html>\
+          <head>\
+            <meta charset='utf-8'>\
+            <meta name='viewport' content='width=device-width, initial-scale=1'>\
+            <title>Teste</title>\
+          </head>\
+          <body>\
+          <span id='entrada'>"
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            + lista +
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        "</span>\
+          <hr>\
+          <span id='saida'></span>\
+          <script>\
+            sessionStorage.clear();\
+            let dados = document.getElementById('entrada').innerHTML;\
+            dados = dados.split('<br>');\
+            console.log(dados);\
+            let cont = 0;\
+            dados.forEach(d =>{\
+              cont++;\
+              sessionStorage.setItem(cont, d);\
+              sessionStorage.setItem('cont', cont - 1);\
+            });\
+            location.href = '/login';\
+          </script>\
+          </body>\
+        </html>"
+        );//webpageCore);
+    }); 
+
+    server.on("/login", HTTP_GET, [](AsyncWebServerRequest *request){
         request->send(200, "text/html", webpageDados);
     });
   /*
@@ -100,7 +186,7 @@ void setup(){
       delay(1000);
       reset();
       cont ++;
-      Serial.print("Conectando: ");
+      Serial.print("Tentativa: ");
       Serial.println(cont);
       if(cont == 15){//se passar 15 segundos sem conectar volta ao inicio
         INICIO = true;
@@ -140,6 +226,7 @@ void openFS(void) {
     Serial.println("Ok");
     INICIO = false;//pula servidor web
   }//end teste de dados
+  delay(500);
 }//end open FS
 String readFile(String path) {
   File rFile = SPIFFS.open(path, "r");
